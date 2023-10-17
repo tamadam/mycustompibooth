@@ -21,6 +21,7 @@ import pibooth
 from pibooth import fonts
 from pibooth import language
 from pibooth.counters import Counters
+from pibooth.nameholder import Nameholder
 from pibooth.utils import (LOGGER, PoolingTimer, configure_logging, get_crash_message,
                            set_logging_level, get_event_pos)
 from pibooth.states import StateMachine
@@ -62,6 +63,8 @@ class PiApplication(object):
     :type previous_picture_file: str
     :attr count: holder for counter values
     :type count: :py:class:`pibooth.counters.Counters`
+    :attr nameofperson: holder for typed in name
+    :type nameofperson: str
     :attr camera: camera used
     :type camera: :py:class:`pibooth.camera.base.BaseCamera`
     :attr buttons: access to hardware buttons ``capture`` and ``printer``
@@ -119,6 +122,7 @@ class PiApplication(object):
         # Change them may break plugins compatibility
         self.capture_nbr = None
         self.capture_date = None
+        self.nameofperson = None
         self.capture_choices = (4, 1)
         self.previous_picture = None
         self.previous_animated = None
@@ -126,6 +130,10 @@ class PiApplication(object):
 
         self.count = Counters(self._config.join_path("counters.pickle"),
                               taken=0, printed=0, forgotten=0,
+                              remaining_duplicates=self._config.getint('PRINTER', 'max_duplicates'))
+
+        self.nameholder = Nameholder(self._config.join_path("nameholder.pickle"),
+                              name="",
                               remaining_duplicates=self._config.getint('PRINTER', 'max_duplicates'))
 
         self.camera = self._pm.hook.pibooth_setup_camera(cfg=self._config)
@@ -253,7 +261,9 @@ class PiApplication(object):
         """
         if not self.capture_date:
             raise EnvironmentError("The 'capture_date' attribute is not set yet")
-        return "{}_pibooth.jpg".format(self.capture_date)
+        if not self.nameofperson:
+            raise EnvironmentError("The 'nameofperson' attribute is not set yet")
+        return "{}_{}_pibooth.jpg".format(self.nameofperson,self.capture_date)
 
     def find_quit_event(self, events):
         """Return the first found event if found in the list.
@@ -480,13 +490,13 @@ def main():
         LOGGER.info("Editing the pibooth configuration...")
         config.edit()
     elif options.translate:
-        LOGGER.info("Editing the GUI translations...")
+        LOGGER.info("1 Editing the GUI translations...")
         language.edit()
     elif options.reset:
         config.save(default=True)
         plugin_manager.hook.pibooth_reset(cfg=config, hard=True)
     else:
-        LOGGER.info("Starting the photo booth application %s", GPIO_INFO)
+        LOGGER.info("1 Starting the photo booth application %s", GPIO_INFO)
         app = PiApplication(config, plugin_manager)
         app.main_loop()
 

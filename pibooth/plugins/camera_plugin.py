@@ -114,3 +114,5 @@ class CameraPlugin(object):
     @pibooth.hookimpl
     def state_processing_enter(self, app):
         self.count = 0
+            
+    
