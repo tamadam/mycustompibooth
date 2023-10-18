@@ -3,7 +3,7 @@
 import pibooth
 from pibooth.utils import LOGGER, get_crash_message, PoolingTimer
 import tkinter as tk
-from tkinter import simpledialog,messagebox
+from tkinter import *
 from pibooth.counters import Counters
 from pibooth.nameholder import Nameholder
 from configparser import RawConfigParser
@@ -325,6 +325,8 @@ class Popupwindowka(ctk.CTk):
         super().__init__()
         self.geometry("1080x1920")
         self.title("Photo Booth")
+        self.emailReady = False
+        self.emailTypedIn = ""
         
         self.nameofperson = app.nameofperson
         self.previous_picture = app.previous_picture
@@ -353,33 +355,77 @@ class Popupwindowka(ctk.CTk):
         
     def popup_button_close(self):
         self.image_label.destroy()
+        self.button.destroy()
         self.popup_email_entry()
         #self.destroy()
         
     def popup_email_window_creator(self):
             
-        self.dialog = ctk.CTkInputDialog(text="Enter your company email\nÍrd be az NI-os email címed",title="Email")
+                      
+        self.MainFrame = Frame(self, width=1080, height=490, relief = RIDGE, background='#2e2e2e')
+        self.MainFrame.place(x=0,y=800)
 
-        self.dialog.geometry("+400+800")
+    
+        pushKeysBy = 2    
+        keys = [
+                ['1','2','3','4','5','6','7','8','9','0','-','=','Back\nVissza'],
+                ['Q','W','E','R','T','Y','U','I','O','P','[',']','Delete\nTörlés'],
+                ['A','S','D','F','G','H','J','K','L',';','~',',','@ni.com'],
+                ['Z','X','C','V','B','N','M','.','@','@ni.com','#','?']
+
+            ]
+        
+        
+        '''for i, key_row in enumerate(keys):
+            for j, key in enumerate(key_row):
+                tk.Button(MainFrame, background='black', font=("Verdana",14,"bold"), foreground='white',text=key, width=6, height=6).grid(row=i+pushKeysBy, column=j)
+           '''
+        
+        def button_click(key):
+            currentLen = len(str(entry.get()))
+            if key=="Back\nVissza":
+                entry.delete(currentLen-1,currentLen)
+            elif key=="Delete\nTörlés":
+                entry.delete(0,currentLen)
+            else:
+                entry.insert(currentLen,str(key).lower())
+                
+        def submit_email(self):
+            self.emailTypedIn = str(entry.get())
+            
+            
+        
+        instruction = ctk.CTkLabel(self.MainFrame,width=1080,font=("Verdana",28),text="Kérlek, írd be a céges e-mail címed.\n\nPlease, enter your company email address.",pady=10)
+        instruction.grid(row=0,column=0,columnspan=len(keys[0]),pady=10)
+        
+        entry = tk.Entry(self.MainFrame,font=('arial',28,'bold'),bd=5,width=48)
+        entry.grid(row=1, column=0, columnspan=len(keys[0]), pady=10)
+        
+        for i, key_row in enumerate(keys):
+            for j, key in enumerate(key_row):
+                tk.Button(self.MainFrame, background='#3e3e3e', foreground='white',command = lambda key = key: button_click(key), text=key, width=6, height=6).grid(row=i+pushKeysBy, column=j)
+                
+
+        tk.Button(self.MainFrame, background='#3e3e3e', foreground='white',command = lambda self = self: submit_email(self), text="OK", width=48, height=6,pady=20).grid(row=len(keys[0]), column=0,columnspan=len(keys[0]))
         
     def popup_email_entry(self):
         
         result = None
+        self.emailReady = False
         
         self.popup_email_window_creator()
-        while result is None:
+        while result == "" or result is None:
             self.update()
-            result = self.dialog.get_input()
-            
-            if result is None:
-                self.dialog.destroy()
-                self.destroy()
-                return
+            result = self.emailTypedIn
+            #result = self.dialog.get_input()
                 
-            if result == "":
-                self.dialog.destroy()
-                self.popup_email_window_creator()
+            '''if result == "":
+                self.MainFrame.destroy()
+                #self.dialog.destroy()
+                self.popup_email_window_creator()'''
         
+        LOGGER.info(result)
+        print("asdasd ------ " + result)
         self.nameofperson = result
         self.destroy()
     
